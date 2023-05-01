@@ -1,0 +1,179 @@
+/// A function to parse the given input in `Дід` format.
+///
+/// Returns error if the input is not a valid `Дід`.
+parse: func(input: string) -> expected<ast-node, parse-error>
+
+/// Error returned by the parser.
+record parse-error {
+    kind: parse-error-kind,
+    line: u64,
+    column: u64,
+    index: u64,
+    info: option<string>,
+}
+
+/// The kind of a parse error.
+enum parse-error-kind {
+    expected-empty-node,
+    expected-logical-node,
+    expected-number-node,
+    expected-text-node,
+    expected-list-node,
+    expected-dictionary-node,
+    expected-object-node,
+    expected-eof,
+}
+
+/// An abstract syntax tree node of a `Дід` file.
+variant ast-node {
+    empty(empty-node),
+    logical(logical-node),
+    number(number-node),
+    text(text-node),
+    %list(list-node),
+    dictionary(dictionary-node),
+    object(object-node),
+}
+
+/// A context of a node in the abstract syntax tree.
+record node-context {
+    /// The line number of the node in the input file.
+    line: u64,
+    /// The column number of the node in the input file.
+    column: u64,
+    /// The symbol index of the node in the input file.
+    index: u64,
+}
+
+/// An empty node.
+///
+/// 'пусто'
+record empty-node {
+    context: node-context,
+}
+
+/// A logical node.
+///
+/// 'так' or 'ні'
+record logical-node {
+    value: bool,
+    context: node-context,
+}
+
+/// A number node.
+///
+/// A number can be either an integer or a float.
+///
+/// # Examples
+/// - `0`
+/// - `-1`
+/// - `3.14`
+/// - `-2.71828`
+record number-node {
+    value: number,
+    context: node-context,
+}
+
+/// The value of a number node.
+variant number {
+    integer(s64),
+    float(float64),
+}
+
+/// A text node.
+///
+/// - A text node is a sequence of characters, delimited by double quotes.
+/// - The sequence can contain escape sequences (`\n`, `\t`, `\r`, `\\`, `\"`).
+/// - The sequence can not contain explicit line feeds.
+///
+/// # Examples
+/// - `""`
+/// - `"привіт від Лесі"`
+record text-node {
+    value: string,
+    context: node-context,
+}
+
+/// A list node.
+///
+/// A list is a sequence of entries of other nodes, between square brackets, separated by commas.
+///
+/// # Examples
+/// - `[]`
+/// - `[так, ні]`
+/// - `[1, 2, 3]`
+record list-node {
+    entries: list<list-entry-node>,
+    context: node-context,
+}
+
+type list-entry-node = boxed-ast-node
+
+/// A dictionary node.
+///
+/// A dictionary is a sequence of key-value pairs of a text node and another node,
+/// between parentheses, separated by commas.
+/// Keys can be not in quotes if they are valid identifiers.
+/// 
+/// # Examples
+/// - `()`
+/// - `(а=так, б=ні)`
+/// - `("1"=2)`
+record dictionary-node {
+    entries: list<dictionary-entry-node>,
+    context: node-context,
+}
+
+/// A dictionary entry node.
+///
+/// A dictionary entry is a key-value pair of a text node and another node.
+/// Keys can be not in quotes if they are valid identifiers.
+///
+/// # Examples
+/// - `а=так`
+/// - `б=ні`
+/// - `"1"=2`
+record dictionary-entry-node {
+    key: text-node,
+    value: boxed-ast-node,
+    context: node-context,
+}
+
+/// An object node.
+///
+/// An object is a named sequence of key-value pairs of a text node and another node,
+/// between parentheses, separated by commas.
+/// Keys must be valid identifiers and are not in quotes.
+///
+/// # Examples
+/// - `Нічого()`
+/// - `Людина(ім'я="Леся", вік=20)`
+/// - `Координати(x=1, y=2, z=3)`
+record object-node {
+    name: string,
+    entries: list<object-entry-node>,
+    context: node-context,
+}
+
+/// An object entry node.
+///
+/// An object entry is a key-value pair of a text node and another node.
+/// Keys must be valid identifiers and are not in quotes.
+///
+/// # Examples
+/// - `ім'я="Леся"`
+/// - `вік=20`
+/// - `x=1`
+record object-entry-node {
+    key: text-node,
+    value: boxed-ast-node,
+    context: node-context,
+}
+
+/// A boxed abstract syntax tree node.
+///
+/// Used to avoid recursions.
+resource boxed-ast-node {
+    /// Creates a copy of the underlying node and returns it.
+    get: func() -> ast-node
+}

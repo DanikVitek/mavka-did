@@ -1,0 +1,24 @@
+[package]
+name = "mavka-did"
+version = "0.1.0"
+edition = "2021"
+description = "Парсер для формату Дід"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[package.metadata.wapm]
+namespace = "danik-vitek"
+abi = "none"
+bindings = { wai-version = "0.1.0", exports = "api.wai" }
+
+[profile.release]
+lto = true
+opt-level = 3
+strip = true
+
+[dependencies]
+nom = "7.1.3"
+wai-bindgen-rust = { version = "0.2.3", default-features = false, features = ["macros", "wai-bindgen-rust-impl"] }
