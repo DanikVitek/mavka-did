@@ -7,11 +7,11 @@ pub mod parser;
 
 use crate::api::{AstNode, ParseError};
 
-mod node {
+pub mod node {
     pub use crate::api::{
         AstNode, BoxedAstNode, DictionaryEntryNode, DictionaryNode, EmptyNode, ListEntryNode,
         ListNode, LogicalNode, NodeContext, Number, NumberNode, ObjectEntryNode, ObjectNode,
-        ParseError, ParseErrorKind, TextNode,
+        ParseError, ParseErrorExpectation, TextNode,
     };
 }
 

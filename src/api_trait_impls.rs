@@ -3,13 +3,16 @@ use std::{
     ops::{Add, AddAssign, Neg},
 };
 
+use wai_bindgen_rust::Handle;
+
 use crate::{
     api::{
-        AstNode, DictionaryEntryNode, DictionaryNode, EmptyNode, ListNode, LogicalNode,
-        NodeContext, Number, NumberNode, ObjectEntryNode, ObjectNode, ParseError, ParseErrorKind,
-        TextNode,
+        AstNode, DictionaryEntryKey, DictionaryEntryNode, DictionaryNode, EmptyNode, ListNode,
+        LogicalNode, NodeContext, Number, NumberNode, ObjectEntryNode, ObjectNode, ParseError,
+        ParseErrorExpectation, TextNode,
     },
     parser::Offset,
+    BoxedAstNode,
 };
 
 impl Default for NodeContext {
@@ -25,20 +28,27 @@ impl Default for NodeContext {
 impl Add<Offset> for NodeContext {
     type Output = Self;
 
-    fn add(self, rhs: Offset) -> Self::Output {
-        Self {
-            line: self.line + rhs.line,
-            column: self.column + rhs.column,
-            index: self.index + rhs.index,
-        }
+    fn add(mut self, rhs: Offset) -> Self::Output {
+        self += rhs;
+        self
     }
 }
 
 impl AddAssign<Offset> for NodeContext {
     fn add_assign(&mut self, rhs: Offset) {
-        self.line += rhs.line;
-        self.column += rhs.column;
         self.index += rhs.index;
+
+        self.add_lines(rhs.line);
+        self.column += rhs.column;
+    }
+}
+
+impl NodeContext {
+    fn add_lines(&mut self, lines: u64) {
+        self.line += lines;
+        if lines > 0 {
+            self.column = 0;
+        }
     }
 }
 
@@ -239,6 +249,18 @@ impl Clone for DictionaryEntryNode {
     }
 }
 
+impl PartialEq for DictionaryEntryKey {
+    fn eq(&self, other: &Self) -> bool {
+        match (self, other) {
+            (Self::Text(l0), Self::Text(r0)) => l0 == r0,
+            (Self::Number(l0), Self::Number(r0)) => l0 == r0,
+            _ => false,
+        }
+    }
+}
+
+impl Eq for DictionaryEntryKey {}
+
 impl PartialEq for DictionaryEntryNode {
     fn eq(&self, other: &Self) -> bool {
         self.context == other.context && self.key == other.key && self.value.0 == other.value.0
@@ -288,29 +310,44 @@ impl PartialEq for ObjectEntryNode {
     }
 }
 
-impl fmt::Display for ParseErrorKind {
+impl fmt::Display for ParseErrorExpectation {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            ParseErrorKind::ExpectedEmptyNode => write!(f, "Очікувався вузол `пусто`"),
-            ParseErrorKind::ExpectedLogicalNode => {
-                write!(f, "Очікувався логічний вузол (`так` або `ні`)")
-            }
-            ParseErrorKind::ExpectedNumberNode => write!(f, "Очікувався числовий вузол"),
-            ParseErrorKind::ExpectedTextNode => write!(
+        match *self {
+            Self::EmptyNode => write!(f, "Очікувався вузол `пусто`"),
+            Self::LogicalNode => write!(f, "Очікувався логічний вузол (`так` або `ні`)"),
+            Self::NumberNode => write!(f, "Очікувався числовий вузол"),
+            Self::TextNode => write!(
                 f,
                 "Очікувався текстовий вузол. Явні перенесення рядків не дозволені"
             ),
-            ParseErrorKind::ExpectedListNode => write!(f, "Очікувався список"),
-            ParseErrorKind::ExpectedDictionaryNode => write!(f, "Очікувався словник"),
-            ParseErrorKind::ExpectedObjectNode => write!(f, "Очікувався об'єкт"),
-            ParseErrorKind::ExpectedEof => write!(f, "Очікувався кінець файлу"),
+            Self::ListNode => write!(f, "Очікувався список"),
+            Self::DictionaryNode => write!(f, "Очікувався словник"),
+            Self::DictionaryEntryNode => write!(f, "Очікувався запис словника"),
+            Self::DictionaryEntryKey => write!(
+                f,
+                "Очікувався ключ запису словника (ідентифікатор, текст або число)"
+            ),
+            Self::ObjectNode => write!(f, "Очікувався об'єкт"),
+            Self::ObjectEntryNode => write!(f, "Очікувався запис об'єкта"),
+            Self::AstNode => write!(f, "Очікувався вузол формату `Дід`"),
+            Self::Identifier => write!(
+                f,
+                "Очікувався ідентифікатор запису (має починатися з літери або `_`)"
+            ),
+            Self::EqualsSign => write!(f, "Очікувався знак рівності `=`"),
+            Self::LeftParenthesis => write!(f, "Очікувався ліва кругла дужка `(`"),
+            Self::RightParenthesis => write!(f, "Очікувався права кругла дужка `)`"),
+            Self::LeftBracket => write!(f, "Очікувався ліва квадратна дужка `[`"),
+            Self::RightBracket => write!(f, "Очікувався права квадратна дужка `]`"),
+            Self::EntryValue => write!(f, "Очікувалася значення запису"),
+            Self::Eof => write!(f, "Очікувався кінець файлу"),
         }
     }
 }
 
 impl fmt::Display for ParseError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        writeln!(f, "Тип помилки: {}", self.kind)?;
+        writeln!(f, "Вид помилки: {}", self.expectation)?;
         write!(
             f,
             "Рядок: {}, Стовпчик: {}, Індекс: {}",
@@ -327,10 +364,24 @@ impl std::error::Error for ParseError {}
 
 impl PartialEq for ParseError {
     fn eq(&self, other: &Self) -> bool {
-        self.kind == other.kind
+        self.expectation == other.expectation
             && self.line == other.line
             && self.column == other.column
             && self.index == other.index
             && self.info == other.info
+    }
+}
+
+impl<T: Into<AstNode>> From<T> for BoxedAstNode {
+    #[inline]
+    fn from(value: T) -> Self {
+        BoxedAstNode(value.into())
+    }
+}
+
+impl From<AstNode> for Handle<BoxedAstNode> {
+    #[inline]
+    fn from(value: AstNode) -> Self {
+        Handle::new(value.into())
     }
 }

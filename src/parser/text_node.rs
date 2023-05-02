@@ -6,7 +6,7 @@ use nom::{
     sequence::delimited,
 };
 
-use crate::api::{NodeContext, ParseError, ParseErrorKind, TextNode};
+use crate::api::{NodeContext, ParseError, ParseErrorExpectation, TextNode};
 
 use super::{make_info, Offset, Parse, ParseResult};
 
@@ -47,7 +47,7 @@ impl Parse for TextNode {
             char('"'),
         )(input)
         .map_err(|_| ParseError {
-            kind: ParseErrorKind::ExpectedTextNode,
+            expectation: ParseErrorExpectation::TextNode,
             line,
             column,
             index,
@@ -59,7 +59,7 @@ impl Parse for TextNode {
 #[cfg(test)]
 mod tests {
     use crate::{
-        api::{NodeContext, ParseError, ParseErrorKind, TextNode},
+        api::{NodeContext, ParseError, ParseErrorExpectation, TextNode},
         parser::Parse,
     };
 
@@ -139,7 +139,7 @@ mod tests {
     fn test_text_node_parse_for_invalid_input() {
         let input = "\"Invalid\nInput\"";
         let expected_error = ParseError {
-            kind: ParseErrorKind::ExpectedTextNode,
+            expectation: ParseErrorExpectation::TextNode,
             line: 0,
             column: 0,
             index: 0,

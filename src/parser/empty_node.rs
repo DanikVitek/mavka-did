@@ -1,6 +1,6 @@
 use nom::{bytes::complete::tag, combinator::value};
 
-use crate::api::{EmptyNode, NodeContext, ParseError, ParseErrorKind};
+use crate::api::{EmptyNode, NodeContext, ParseError, ParseErrorExpectation};
 
 use super::{Offset, Parse, ParseResult, make_info};
 
@@ -26,7 +26,7 @@ impl Parse for EmptyNode {
             tag("пусто"),
         )(input)
         .map_err(|_| ParseError {
-            kind: ParseErrorKind::ExpectedEmptyNode,
+            expectation: ParseErrorExpectation::EmptyNode,
             line,
             column,
             index,

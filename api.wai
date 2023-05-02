@@ -1,30 +1,60 @@
-/// A function to parse the given input in `Дід` format.
+/// Функція для розбору заданого вхідного рядка у форматі `Дід`.
 ///
-/// Returns error if the input is not a valid `Дід`.
+/// Повертає помилку, якщо вхідний рядок не є коректним `Дід`.
 parse: func(input: string) -> expected<ast-node, parse-error>
 
-/// Error returned by the parser.
+/// Помилка, видана розбирачем.
 record parse-error {
-    kind: parse-error-kind,
+    expectation: parse-error-expectation,
     line: u64,
     column: u64,
     index: u64,
     info: option<string>,
 }
 
-/// The kind of a parse error.
-enum parse-error-kind {
-    expected-empty-node,
-    expected-logical-node,
-    expected-number-node,
-    expected-text-node,
-    expected-list-node,
-    expected-dictionary-node,
-    expected-object-node,
-    expected-eof,
+/// Вид помилки розбирача.
+enum parse-error-expectation {
+    /// Очікувався вузол `пусто`
+    empty-node,
+    /// Очікувався логічний вузол (`так` або `ні`)
+    logical-node,
+    /// Очікувався числовий вузол
+    number-node,
+    /// Очікувався текстовий вузол. Явні перенесення рядків не дозволені
+    text-node,
+    /// Очікувався список
+    list-node,
+    /// Очікувався словник
+    dictionary-node,
+    /// Очікувався запис словника
+    dictionary-entry-node,
+    /// Очікувався ключ запису словника (ідентифікатор, текст або число)
+    dictionary-entry-key,
+    /// Очікувався об'єкт
+    object-node,
+    /// Очікувався запис об'єкта
+    object-entry-node,
+    /// Очікувався вузол формату `Дід`
+    ast-node,
+    /// Очікувався ідентифікатор запису (має починатися з літери або `_`)
+    identifier,
+    /// Очікувався знак рівності `=`
+    equals-sign,
+    /// Очікувалася ліва кругла дужка `(`
+    left-parenthesis,
+    /// Очікувалася права кругла дужка `)`
+    right-parenthesis,
+    /// Очікувалася ліва квадратна дужка `[`
+    left-bracket,
+    /// Очікувалася права квадратна дужка `]`
+    right-bracket,
+    /// Очікувалося значення запису
+    entry-value,
+    /// Очікувався кінець файлу
+    eof,
 }
 
-/// An abstract syntax tree node of a `Дід` file.
+/// Абстрактне синтаксичне дерево файлу `Дід`.
 variant ast-node {
     empty(empty-node),
     logical(logical-node),
@@ -35,36 +65,39 @@ variant ast-node {
     object(object-node),
 }
 
-/// A context of a node in the abstract syntax tree.
+/// Контекст вузла в абстрактному синтаксичному дереві.
 record node-context {
-    /// The line number of the node in the input file.
+    /// Номер рядка вхідного файлу, на якому знаходиться вузол.
+    /// Нумерація рядків починається з 1.
     line: u64,
-    /// The column number of the node in the input file.
+    /// Номер стовпця вхідного файлу, на якому знаходиться вузол.
+    /// Нумерація стовпців починається з 1.
     column: u64,
-    /// The symbol index of the node in the input file.
+    /// Індекс символу вхідного файлу, на якому починається вузол.
+    /// Нумерація символів починається з 0.
     index: u64,
 }
 
-/// An empty node.
+/// # Вузол, що представляє відсутність значення.
 ///
 /// 'пусто'
 record empty-node {
     context: node-context,
 }
 
-/// A logical node.
+/// # Вузол, що представляє логічне значення.
 ///
-/// 'так' or 'ні'
+/// 'так' або 'ні'
 record logical-node {
     value: bool,
     context: node-context,
 }
 
-/// A number node.
+/// # Вузол, що представляє числове значення.
 ///
-/// A number can be either an integer or a float.
+/// Число може бути цілим або дійсним.
 ///
-/// # Examples
+/// ## Приклади
 /// - `0`
 /// - `-1`
 /// - `3.14`
@@ -74,19 +107,19 @@ record number-node {
     context: node-context,
 }
 
-/// The value of a number node.
+/// Значення числового вузла.
 variant number {
     integer(s64),
     float(float64),
 }
 
-/// A text node.
+/// # Вузол, що представляє текстове значення.
 ///
-/// - A text node is a sequence of characters, delimited by double quotes.
-/// - The sequence can contain escape sequences (`\n`, `\t`, `\r`, `\\`, `\"`).
-/// - The sequence can not contain explicit line feeds.
+/// - Текстовий вузол є послідовністю символів, обмеженою подвійними лапками (якщо не ідентифікатор).
+/// - Текст може містити escape-послідовності (`\n`, `\t`, `\r`, `\\`, `\"`).
+/// - Текст не може містити явних перенесень рядків.
 ///
-/// # Examples
+/// ## Приклади
 /// - `""`
 /// - `"привіт від Лесі"`
 record text-node {
@@ -94,11 +127,11 @@ record text-node {
     context: node-context,
 }
 
-/// A list node.
+/// # Вузол, що представляє список вузлів.
 ///
-/// A list is a sequence of entries of other nodes, between square brackets, separated by commas.
+/// Список це послідовність записів інших вузлів, обмежена квадратними дужками, розділених комами.
 ///
-/// # Examples
+/// ## Приклади
 /// - `[]`
 /// - `[так, ні]`
 /// - `[1, 2, 3]`
@@ -109,58 +142,73 @@ record list-node {
 
 type list-entry-node = boxed-ast-node
 
-/// A dictionary node.
+/// Вузол словника.
 ///
-/// A dictionary is a sequence of key-value pairs of a text node and another node,
-/// between parentheses, separated by commas.
-/// Keys can be not in quotes if they are valid identifiers.
+/// Словник це послідовність записів пара ключ-значення текстового/числового вузла та іншого вузла,
+/// обмежена круглими дужками, розділених комами.
+/// Ключі можуть бути без лапок, якщо вони є коректними ідентифікаторами.
 /// 
-/// # Examples
+/// ## Приклади
 /// - `()`
-/// - `(а=так, б=ні)`
-/// - `("1"=2)`
+/// - `(а=так, "б"=ні)`
+/// - `(1=2)`
 record dictionary-node {
     entries: list<dictionary-entry-node>,
     context: node-context,
 }
 
-/// A dictionary entry node.
+/// Вузол запису словника.
 ///
-/// A dictionary entry is a key-value pair of a text node and another node.
-/// Keys can be not in quotes if they are valid identifiers.
+/// Запис словника це пара ключ-значення текстового/числового вузла та іншого вузла.
+/// Ключі можуть бути без лапок, якщо вони є коректними ідентифікаторами.
 ///
-/// # Examples
+/// ## Приклади
 /// - `а=так`
-/// - `б=ні`
-/// - `"1"=2`
+/// - `"б"=ні`
+/// - `1=2`
 record dictionary-entry-node {
-    key: text-node,
+    key: dictionary-entry-key,
     value: boxed-ast-node,
     context: node-context,
 }
 
-/// An object node.
+/// Ключ запису словника.
 ///
-/// An object is a named sequence of key-value pairs of a text node and another node,
-/// between parentheses, separated by commas.
-/// Keys must be valid identifiers and are not in quotes.
+/// Ключ може бути текстовим або числовим вузлом.
+/// Якщо ключ є текстовим вузлом, він може бути без лапок, якщо він є коректним ідентифікатором.
 ///
-/// # Examples
+/// ## Приклади
+/// - `а`
+/// - `"б"`
+/// - `1`
+variant dictionary-entry-key {
+    text(text-node),
+    number(number-node),
+}
+
+/// Вузол об'єкту.
+///
+/// Об'єкт це іменована послідовність записів пара ключ-значення
+/// текстового вузла та іншого вузла,
+/// між круглими дужками, розділених комами.
+/// Ключі мають бути коректними ідентифікаторами без лапок.
+///
+/// ## Приклади
 /// - `Нічого()`
 /// - `Людина(ім'я="Леся", вік=20)`
 /// - `Координати(x=1, y=2, z=3)`
 record object-node {
-    name: string,
+    name: text-node,
     entries: list<object-entry-node>,
     context: node-context,
 }
 
-/// An object entry node.
+/// Вузол запису об'єкту.
 ///
-/// An object entry is a key-value pair of a text node and another node.
-/// Keys must be valid identifiers and are not in quotes.
+/// Запис об'єкту це пара ключ-значення текстового вузла та іншого вузла.
+/// Ключі мають бути коректними ідентифікаторами без лапок.
 ///
-/// # Examples
+/// ## Приклади
 /// - `ім'я="Леся"`
 /// - `вік=20`
 /// - `x=1`
@@ -170,10 +218,10 @@ record object-entry-node {
     context: node-context,
 }
 
-/// A boxed abstract syntax tree node.
+/// Запакований вузол абстрактного синтаксичного дерева.
 ///
-/// Used to avoid recursions.
+/// Використовується для уникнення рекурсій типів.
 resource boxed-ast-node {
-    /// Creates a copy of the underlying node and returns it.
+    /// Створює копію внутрішнього вузла та повертає її.
     get: func() -> ast-node
 }

@@ -1,6 +1,6 @@
 use nom::{branch::alt, bytes::complete::tag, combinator::value};
 
-use crate::api::{LogicalNode, NodeContext, ParseError, ParseErrorKind};
+use crate::api::{LogicalNode, NodeContext, ParseError, ParseErrorExpectation};
 
 use super::{Offset, Parse, ParseResult, make_info};
 
@@ -46,7 +46,7 @@ impl Parse for LogicalNode {
             ),
         ))(input)
         .map_err(|_| ParseError {
-            kind: ParseErrorKind::ExpectedLogicalNode,
+            expectation: ParseErrorExpectation::LogicalNode,
             line,
             column,
             index,

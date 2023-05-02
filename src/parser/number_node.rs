@@ -6,7 +6,7 @@ use nom::{
     IResult,
 };
 
-use crate::api::{NodeContext, Number, NumberNode, ParseError, ParseErrorKind};
+use crate::api::{NodeContext, Number, NumberNode, ParseError, ParseErrorExpectation};
 
 use super::{make_info, Offset, Parse, ParseResult};
 
@@ -20,7 +20,7 @@ impl Parse for NumberNode {
         }: NodeContext,
     ) -> ParseResult<'_, Self> {
         number(context)(input).map_err(|_| ParseError {
-            kind: ParseErrorKind::ExpectedNumberNode,
+            expectation: ParseErrorExpectation::NumberNode,
             line,
             column,
             index,
