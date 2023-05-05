@@ -11,7 +11,7 @@ JavaScript:
 import {bindings} from "@danikvitek/mavka-did";
 
 async function main() {
-    const did = await bindings();
+    const did = await bindings.api();
     const code =
 `Людина(
   імʼя="Давид",
