@@ -1,3 +1,35 @@
+# Парсер формату `Дід`
+
+Цей проект є реалізацією парсера формату `Дід` для WebAssembly.
+
+## Використання
+
+JavaScript:
+
+```js
+import {bindings} from "@danikvitek/mavka-did";
+
+async function main() {
+    const did = await bindings();
+    const code =
+`Людина(
+  імʼя="Давид",
+  прізвище="Когут",
+  вік=0,
+  параметри=(
+    висота=175,
+    вага=69
+  ),
+  зацікавлення=["творення", "життя"]
+)`;
+    const result = did.parse(code);
+    console.log(did.display(result.val, true));
+}
+```
+
+## API
+
+```wai
 /// Функція для розбору заданого вхідного рядка у форматі `Дід`.
 ///
 /// Повертає помилку, якщо вхідний рядок не є коректним `Дід`.
@@ -228,3 +260,4 @@ resource boxed-ast-node {
     /// Створює копію внутрішнього вузла та повертає її.
     get: func() -> ast-node
 }
+```

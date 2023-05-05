@@ -1,8 +1,10 @@
 [package]
 name = "mavka-did"
-version = "0.0.0"
+version = "0.0.0-1"
 edition = "2021"
 description = "Парсер для формату Дід"
+repository = "https://github.com/DanikVitek/did-wai"
+authors = ["DanikVitek"]
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 

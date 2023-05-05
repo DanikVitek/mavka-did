@@ -47,7 +47,7 @@ impl NodeContext {
     fn add_lines(&mut self, lines: u64) {
         self.line += lines;
         if lines > 0 {
-            self.column = 0;
+            self.column = 1;
         }
     }
 }
@@ -89,8 +89,6 @@ impl PartialEq for AstNode {
     }
 }
 
-impl Eq for AstNode {}
-
 impl From<EmptyNode> for AstNode {
     #[inline]
     fn from(value: EmptyNode) -> Self {
@@ -99,12 +97,10 @@ impl From<EmptyNode> for AstNode {
 }
 
 impl PartialEq for EmptyNode {
-    fn eq(&self, other: &Self) -> bool {
-        self.context == other.context
+    fn eq(&self, _: &Self) -> bool {
+        true
     }
 }
-
-impl Eq for EmptyNode {}
 
 impl From<LogicalNode> for AstNode {
     #[inline]
@@ -115,24 +111,20 @@ impl From<LogicalNode> for AstNode {
 
 impl PartialEq for LogicalNode {
     fn eq(&self, other: &Self) -> bool {
-        self.value == other.value && self.context == other.context
+        self.value == other.value
     }
 }
-
-impl Eq for LogicalNode {}
 
 impl PartialEq for Number {
     fn eq(&self, other: &Self) -> bool {
         match (self, other) {
             (Self::Integer(a), Self::Integer(b)) => a == b,
-            (Self::Float(a), Self::Float(b)) => a.total_cmp(b).is_eq(),
-            (Self::Integer(a), Self::Float(b)) => (*a as f64).total_cmp(b).is_eq(),
-            (Self::Float(a), Self::Integer(b)) => a.total_cmp(&(*b as f64)).is_eq(),
+            (Self::Float(a), Self::Float(b)) => a == b,
+            (Self::Integer(a), Self::Float(b)) => (*a as f64) == *b,
+            (Self::Float(a), Self::Integer(b)) => *a == (*b as f64),
         }
     }
 }
-
-impl Eq for Number {}
 
 impl Neg for Number {
     type Output = Self;
@@ -154,11 +146,9 @@ impl From<NumberNode> for AstNode {
 
 impl PartialEq for NumberNode {
     fn eq(&self, other: &Self) -> bool {
-        self.value == other.value && self.context == other.context
+        self.value == other.value
     }
 }
-
-impl Eq for NumberNode {}
 
 impl Neg for NumberNode {
     type Output = Self;
@@ -180,11 +170,9 @@ impl From<TextNode> for AstNode {
 
 impl PartialEq for TextNode {
     fn eq(&self, other: &Self) -> bool {
-        self.value == other.value && self.context == other.context
+        self.value == other.value
     }
 }
-
-impl Eq for TextNode {}
 
 impl From<ListNode> for AstNode {
     #[inline]
@@ -204,16 +192,12 @@ impl Clone for ListNode {
 
 impl PartialEq for ListNode {
     fn eq(&self, other: &Self) -> bool {
-        self.context == other.context
-            && self
-                .entries
-                .iter()
-                .zip(other.entries.iter())
-                .all(|(l, r)| l.0 == r.0)
+        self.entries
+            .iter()
+            .zip(other.entries.iter())
+            .all(|(l, r)| l.0 == r.0)
     }
 }
-
-impl Eq for ListNode {}
 
 impl From<DictionaryNode> for AstNode {
     #[inline]
@@ -233,11 +217,9 @@ impl Clone for DictionaryNode {
 
 impl PartialEq for DictionaryNode {
     fn eq(&self, other: &Self) -> bool {
-        self.context == other.context && self.entries == other.entries
+        self.entries == other.entries
     }
 }
-
-impl Eq for DictionaryNode {}
 
 impl Clone for DictionaryEntryNode {
     fn clone(&self) -> Self {
@@ -263,11 +245,9 @@ impl Eq for DictionaryEntryKey {}
 
 impl PartialEq for DictionaryEntryNode {
     fn eq(&self, other: &Self) -> bool {
-        self.context == other.context && self.key == other.key && self.value.0 == other.value.0
+        self.key == other.key && self.value.0 == other.value.0
     }
 }
-
-impl Eq for DictionaryEntryNode {}
 
 impl From<ObjectNode> for AstNode {
     #[inline]
@@ -288,11 +268,9 @@ impl Clone for ObjectNode {
 
 impl PartialEq for ObjectNode {
     fn eq(&self, other: &Self) -> bool {
-        self.name == other.name && self.context == other.context && self.entries == other.entries
+        self.entries == other.entries && self.name == other.name
     }
 }
-
-impl Eq for ObjectNode {}
 
 impl Clone for ObjectEntryNode {
     fn clone(&self) -> Self {
@@ -306,7 +284,7 @@ impl Clone for ObjectEntryNode {
 
 impl PartialEq for ObjectEntryNode {
     fn eq(&self, other: &Self) -> bool {
-        self.context == other.context && self.key == other.key && self.value.0 == other.value.0
+        self.key == other.key && self.value.0 == other.value.0
     }
 }
 
@@ -380,5 +358,11 @@ impl From<AstNode> for Handle<BoxedAstNode> {
     #[inline]
     fn from(value: AstNode) -> Self {
         Handle::new(value.into())
+    }
+}
+
+impl AsRef<AstNode> for Handle<BoxedAstNode> {
+    fn as_ref(&self) -> &AstNode {
+        &self.0
     }
 }

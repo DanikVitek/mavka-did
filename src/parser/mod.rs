@@ -75,7 +75,13 @@ pub(crate) fn parse_ast(
             line,
             column,
             index,
-            info: make_info(input),
+            info: {
+                let mut info = String::new();
+                for error in errors {
+                    info.push_str(&format!("{}\n\n", error));
+                }
+                info
+            },
         })
 }
 
@@ -248,6 +254,11 @@ fn expect_eof(
 
 #[cfg(test)]
 mod tests {
+    use crate::{
+        api::{Number, ObjectEntryNode},
+        BoxedAstNode,
+    };
+
     use super::*;
 
     #[test]
@@ -306,7 +317,6 @@ mod tests {
     #[test]
     fn skip_whitespace_should_make_valid_offset_for_string_with_only_spaces_and_newlines1() {
         let input = "   \n\n\n";
-        dbg!(input.lines().collect::<Vec<_>>());
         let (rest, offset) = skip_whitespace(input);
         assert_eq!(rest, "");
         assert_eq!(
@@ -332,5 +342,70 @@ mod tests {
                 index: 9,
             }
         );
+    }
+
+    #[test]
+    fn parse_object() {
+        let code = r#"
+Людина(
+    імʼя="Давид",
+    прізвище="Когут",
+    вік=0,
+    параметри=(
+        висота=175,
+        вага=69
+    ),
+    зацікавлення=["творення", "життя"]
+)
+"#;
+        let result = parse(code).unwrap().unwrap_object();
+        assert_eq!(
+            result,
+            ObjectNode {
+                name: TextNode {
+                    value: "Людина".to_string(),
+                    context: NodeContext::default()
+                },
+                entries: vec![
+                    ObjectEntryNode {
+                        key: TextNode {
+                            value: "імʼя".to_string(),
+                            context: NodeContext::default()
+                        },
+                        value: BoxedAstNode::from(TextNode {
+                            value: "Давид".to_string(),
+                            context: NodeContext::default()
+                        })
+                        .into(),
+                        context: NodeContext::default()
+                    },
+                    ObjectEntryNode {
+                        key: TextNode {
+                            value: "прізвище".to_string(),
+                            context: NodeContext::default()
+                        },
+                        value: BoxedAstNode::from(TextNode {
+                            value: "Когут".to_string(),
+                            context: NodeContext::default()
+                        })
+                        .into(),
+                        context: NodeContext::default()
+                    },
+                    ObjectEntryNode {
+                        key: TextNode {
+                            value: "вік".to_string(),
+                            context: NodeContext::default()
+                        },
+                        value: BoxedAstNode::from(NumberNode {
+                            value: Number::Integer(0),
+                            context: NodeContext::default()
+                        })
+                        .into(),
+                        context: NodeContext::default()
+                    },
+                ],
+                context: NodeContext::default()
+            }
+        )
     }
 }
