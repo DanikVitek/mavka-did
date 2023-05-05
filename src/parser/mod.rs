@@ -61,19 +61,21 @@ pub(crate) fn parse_ast(
     fn parse_map<T: ParseNode>(input: &str, context: NodeContext) -> ParseResult<'_, AstNode> {
         T::parse(input, context).map(|(i, (n, c))| (i, (n.into(), c)))
     }
+    let mut errors = Vec::new();
     parse_map::<EmptyNode>(input, context)
-        .or_else(|_| parse_map::<LogicalNode>(input, context))
-        .or_else(|_| parse_map::<NumberNode>(input, context))
-        .or_else(|_| parse_map::<TextNode>(input, context))
-        .or_else(|_| parse_map::<DictionaryNode>(input, context))
-        .or_else(|_| parse_map::<ObjectNode>(input, context))
-        .or_else(|_| parse_map::<ListNode>(input, context))
+        .map_err(|e| errors.push(e))
+        .or_else(|_| parse_map::<LogicalNode>(input, context).map_err(|e| errors.push(e)))
+        .or_else(|_| parse_map::<NumberNode>(input, context).map_err(|e| errors.push(e)))
+        .or_else(|_| parse_map::<TextNode>(input, context).map_err(|e| errors.push(e)))
+        .or_else(|_| parse_map::<DictionaryNode>(input, context).map_err(|e| errors.push(e)))
+        .or_else(|_| parse_map::<ObjectNode>(input, context).map_err(|e| errors.push(e)))
+        .or_else(|_| parse_map::<ListNode>(input, context).map_err(|e| errors.push(e)))
         .map_err(|_| ParseError {
             expectation: ParseErrorExpectation::AstNode,
             line,
             column,
             index,
-            info: Some(make_info(input)),
+            info: make_info(input),
         })
 }
 
@@ -220,7 +222,7 @@ pub(crate) fn parse_ident(
         line,
         column,
         index,
-        info: Some(make_info(input)),
+        info: make_info(input),
     })
 }
 
@@ -240,7 +242,7 @@ fn expect_eof(
         line,
         column,
         index,
-        info: Some(make_info(input)),
+        info: make_info(input),
     })
 }
 

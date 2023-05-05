@@ -50,7 +50,7 @@ impl Parse for LogicalNode {
             line,
             column,
             index,
-            info: Some(make_info(input)),
+            info: make_info(input),
         })
     }
 }

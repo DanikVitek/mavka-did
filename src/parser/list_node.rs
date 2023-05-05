@@ -41,7 +41,7 @@ pub fn list_start(
         line,
         column,
         index,
-        info: Some(make_info(input)),
+        info: make_info(input),
     })?;
     let mut offset: Offset;
     (input, offset) = skip_whitespace(input);
@@ -65,7 +65,7 @@ pub fn list_end(mut input: &str, mut context: NodeContext) -> ParseResult<'_, ()
         line: context.line,
         column: context.column,
         index: context.index,
-        info: Some(make_info(input)),
+        info: make_info(input),
     })?;
 
     context.index += 1;

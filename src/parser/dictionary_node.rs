@@ -44,7 +44,7 @@ pub(super) fn dictionary_start(
         line,
         column,
         index,
-        info: Some(make_info(input)),
+        info: make_info(input),
     })?;
     let mut offset: Offset;
     (input, offset) = skip_whitespace(input);
@@ -68,7 +68,7 @@ pub(super) fn dictionary_end(mut input: &str, mut context: NodeContext) -> Parse
         line: context.line,
         column: context.column,
         index: context.index,
-        info: Some(make_info(input)),
+        info: make_info(input),
     })?;
 
     context.index += 1;

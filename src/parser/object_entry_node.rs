@@ -22,7 +22,7 @@ impl Parse for ObjectEntryNode {
             line: context.line,
             column: context.column,
             index: context.index,
-            info: Some(make_info(input)),
+            info: make_info(input),
         })?;
 
         (input, offset) = skip_whitespace(input);

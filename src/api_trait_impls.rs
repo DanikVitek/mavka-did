@@ -348,15 +348,12 @@ impl fmt::Display for ParseErrorExpectation {
 impl fmt::Display for ParseError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         writeln!(f, "Вид помилки: {}", self.expectation)?;
-        write!(
+        writeln!(
             f,
             "Рядок: {}, Стовпчик: {}, Індекс: {}",
             self.line, self.column, self.index
         )?;
-        if let Some(info) = &self.info {
-            write!(f, "\n{info}")?;
-        }
-        Ok(())
+        write!(f, "{}", self.info)
     }
 }
 

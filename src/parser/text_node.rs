@@ -51,7 +51,7 @@ impl Parse for TextNode {
             line,
             column,
             index,
-            info: Some(make_info(input)),
+            info: make_info(input),
         })
     }
 }
@@ -143,9 +143,7 @@ mod tests {
             line: 0,
             column: 0,
             index: 0,
-            info: Some(String::from(
-                r#"Наступні символи були введені: "\"Invalid\nI...""#,
-            )),
+            info: r#"Наступні символи були введені: "\"Invalid\nI...""#.to_owned(),
         };
         assert_eq!(
             TextNode::parse(

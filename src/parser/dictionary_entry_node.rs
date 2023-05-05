@@ -26,7 +26,7 @@ impl Parse for DictionaryEntryNode {
             line: context.line,
             column: context.column,
             index: context.index,
-            info: Some(make_info(input)),
+            info: make_info(input),
         })?;
 
         (input, offset) = skip_whitespace(input);
@@ -67,6 +67,6 @@ fn parse_entry_key(
             line: context.line,
             column: context.column,
             index: context.index,
-            info: Some(make_info(input)),
+            info: make_info(input),
         })
 }
