@@ -8,7 +8,8 @@ pub mod parser;
 
 use std::fmt::Debug;
 
-use node::{DictionaryEntryNode, ObjectEntryNode};
+use node::{DictionaryEntryNode, ObjectEntryNode, ParseErrorExpectation};
+use pest::error::{InputLocation, LineColLocation};
 use wai_bindgen_rust::Handle;
 
 use crate::api::{AstNode, ParseError};
@@ -30,7 +31,23 @@ impl api::BoxedAstNode for BoxedAstNode {
 impl api::Api for Api {
     #[inline]
     fn parse(input: String) -> Result<AstNode, ParseError> {
-        parser::parse(&input)
+        parser::parse(&input).map(Into::into).map_err(|err| {
+            let (line, column) = match err.line_col {
+                LineColLocation::Pos((line, col)) => (line as u64, col as u64),
+                LineColLocation::Span((line, col), _) => (line as u64, col as u64),
+            };
+            let index = match err.location {
+                InputLocation::Pos(pos) => pos as u64,
+                InputLocation::Span((start, _)) => start as u64,
+            };
+            ParseError {
+                expectation: ParseErrorExpectation::AstNode,
+                line,
+                column,
+                index,
+                info: err.to_string(),
+            }
+        })
     }
 
     fn display(root: AstNode, pretty: bool) -> String {

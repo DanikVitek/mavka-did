@@ -1,0 +1,56 @@
+WHITESPACE = _{ " " | "\t" | "\n" | "\r" }
+
+digit = { ASCII_DIGIT }
+alpha = {
+    ASCII_ALPHA
+  | 'а'..'я'
+  | 'А'..'Я'
+  | "і"
+  | "І"
+  | "ї"
+  | "Ї"
+  | "є"
+  | "Є"
+  | "ґ"
+  | "Ґ"
+}
+
+ident          = @{
+    !keyword ~ ident_start ~ ident_continue*
+  | keyword ~ ident_continue+
+}
+ident_start    =  { !digit ~ ("_" | alpha) }
+ident_continue =  { digit | alpha | "_" | (("'" | "ʼ") ~ alpha) }
+
+keyword = _{ empty | logical }
+
+empty   = @{ "пусто" }
+logical = @{ "так" | "ні" }
+number  = @{ "-"? ~ digit+ ~ ("." ~ digit+)? }
+
+text       = ${ "\"" ~ text_inner ~ "\"" }
+text_inner = @{ char* }
+char       =  {
+    !("\"" | "\\" | NEWLINE) ~ ANY
+  | "\\" ~ ("\"" | "\\" | "b" | "f" | "n" | "r" | "t")
+  | "\\" ~ ("u" ~ ASCII_HEX_DIGIT{4})
+}
+
+node = _{ empty | logical | number | text | dict | object | list }
+
+dict       =  {
+    "(" ~ ")"
+  | "(" ~ dict_entry ~ ("," ~ dict_entry)* ~ ","? ~ ")"
+}
+dict_entry =  { dict_key ~ "=" ~ node }
+dict_key   = _{ number | ident | text }
+
+object       =  {
+    ident ~ ("(" ~ ")" | "(" ~ object_entry ~ ("," ~ object_entry)* ~ ","? ~ ")")
+}
+object_entry =  { object_key ~ "=" ~ node }
+object_key   = _{ ident }
+
+list = { "[" ~ "]" | "[" ~ node ~ ("," ~ node)* ~ ","? ~ "]" }
+
+did = _{ SOI ~ (empty | logical | number | text | dict | object | list) ~ EOI }

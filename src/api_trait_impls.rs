@@ -1,7 +1,4 @@
-use std::{
-    fmt,
-    ops::{Add, AddAssign, Neg},
-};
+use std::{fmt, ops::Neg};
 
 use wai_bindgen_rust::Handle;
 
@@ -11,7 +8,6 @@ use crate::{
         LogicalNode, NodeContext, Number, NumberNode, ObjectEntryNode, ObjectNode, ParseError,
         ParseErrorExpectation, TextNode,
     },
-    parser::Offset,
     BoxedAstNode,
 };
 
@@ -21,33 +17,6 @@ impl Default for NodeContext {
             line: 1,
             column: 1,
             index: 0,
-        }
-    }
-}
-
-impl Add<Offset> for NodeContext {
-    type Output = Self;
-
-    fn add(mut self, rhs: Offset) -> Self::Output {
-        self += rhs;
-        self
-    }
-}
-
-impl AddAssign<Offset> for NodeContext {
-    fn add_assign(&mut self, rhs: Offset) {
-        self.index += rhs.index;
-
-        self.add_lines(rhs.line);
-        self.column += rhs.column;
-    }
-}
-
-impl NodeContext {
-    fn add_lines(&mut self, lines: u64) {
-        self.line += lines;
-        if lines > 0 {
-            self.column = 1;
         }
     }
 }
