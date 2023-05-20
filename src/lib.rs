@@ -1,37 +1,48 @@
-#![deny(clippy::all)]
+#![deny(clippy::all, rust_2018_idioms)]
 
+#[cfg(feature = "wasm")]
 wai_bindgen_rust::export!("api.wai");
 
+#[cfg(feature = "wasm")]
 mod api_trait_impls;
+#[cfg(feature = "wasm")]
 pub mod node;
 pub mod parser;
 
+#[cfg(feature = "wasm")]
 use std::fmt::Debug;
 
+#[cfg(feature = "wasm")]
 use node::{DictionaryEntryNode, ObjectEntryNode, ParseErrorExpectation};
+#[cfg(feature = "wasm")]
 use pest::error::{InputLocation, LineColLocation};
+#[cfg(feature = "wasm")]
 use wai_bindgen_rust::Handle;
 
+#[cfg(feature = "wasm")]
 use crate::api::{AstNode, ParseError};
-
+#[cfg(feature = "wasm")]
 pub struct Api;
 
+#[cfg(feature = "wasm")]
 /// A boxed abstract syntax tree node.
 ///
 /// Used to avoid recursions.
 #[derive(Debug, Clone, PartialEq)]
 pub struct BoxedAstNode(pub AstNode);
 
+#[cfg(feature = "wasm")]
 impl api::BoxedAstNode for BoxedAstNode {
     fn get(&self) -> AstNode {
         self.0.clone()
     }
 }
 
+#[cfg(feature = "wasm")]
 impl api::Api for Api {
     #[inline]
     fn parse(input: String) -> Result<AstNode, ParseError> {
-        parser::parse(&input).map(Into::into).map_err(|err| {
+        parser::parse(&input).map_err(|err| {
             let (line, column) = match err.line_col {
                 LineColLocation::Pos((line, col)) => (line as u64, col as u64),
                 LineColLocation::Span((line, col), _) => (line as u64, col as u64),
@@ -60,6 +71,7 @@ impl api::Api for Api {
     }
 }
 
+#[cfg(feature = "wasm")]
 enum DisplayableAst<'a> {
     Empty(&'a node::EmptyNode),
     Logical(&'a node::LogicalNode),
@@ -71,6 +83,7 @@ enum DisplayableAst<'a> {
     Boxed(&'a Handle<BoxedAstNode>),
 }
 
+#[cfg(feature = "wasm")]
 impl<'a> From<&'a AstNode> for DisplayableAst<'a> {
     fn from(value: &'a AstNode) -> Self {
         match value {
@@ -85,6 +98,7 @@ impl<'a> From<&'a AstNode> for DisplayableAst<'a> {
     }
 }
 
+#[cfg(feature = "wasm")]
 impl Debug for DisplayableAst<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match *self {
@@ -131,8 +145,10 @@ impl Debug for DisplayableAst<'_> {
     }
 }
 
+#[cfg(feature = "wasm")]
 struct DisplayableObjectEntry<'a>(&'a ObjectEntryNode);
 
+#[cfg(feature = "wasm")]
 impl Debug for DisplayableObjectEntry<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.debug_struct("ObjectEntryNode")
@@ -143,8 +159,10 @@ impl Debug for DisplayableObjectEntry<'_> {
     }
 }
 
+#[cfg(feature = "wasm")]
 struct DisplayableDictionaryEntry<'a>(&'a DictionaryEntryNode);
 
+#[cfg(feature = "wasm")]
 impl Debug for DisplayableDictionaryEntry<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.debug_struct("DictionaryEntryNode")
@@ -155,6 +173,7 @@ impl Debug for DisplayableDictionaryEntry<'_> {
     }
 }
 
+#[cfg(feature = "wasm")]
 impl<'a> From<&'a Handle<BoxedAstNode>> for DisplayableAst<'a> {
     fn from(handle: &'a Handle<BoxedAstNode>) -> Self {
         DisplayableAst::Boxed(handle)

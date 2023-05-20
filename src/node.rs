@@ -1,6 +1,6 @@
 pub use crate::api::{
     AstNode, BoxedAstNode, DictionaryEntryNode, DictionaryNode, EmptyNode, ListEntryNode, ListNode,
-    LogicalNode, NodeContext, Number, NumberNode, ObjectEntryNode, ObjectNode, ParseError,
+    LogicalNode, NodeContext, NumberNode, ObjectEntryNode, ObjectNode, ParseError,
     ParseErrorExpectation, TextNode,
 };
 

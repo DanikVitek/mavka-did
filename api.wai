@@ -106,14 +106,8 @@ record logical-node {
 /// - `3.14`
 /// - `-2.71828`
 record number-node {
-    value: number,
+    value: string,
     context: node-context,
-}
-
-/// Значення числового вузла.
-variant number {
-    integer(s64),
-    float(float64),
 }
 
 /// # Вузол, що представляє текстове значення.

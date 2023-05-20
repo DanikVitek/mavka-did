@@ -5,7 +5,7 @@ use wai_bindgen_rust::Handle;
 use crate::{
     api::{
         AstNode, DictionaryEntryKey, DictionaryEntryNode, DictionaryNode, EmptyNode, ListNode,
-        LogicalNode, NodeContext, Number, NumberNode, ObjectEntryNode, ObjectNode, ParseError,
+        LogicalNode, NodeContext, NumberNode, ObjectEntryNode, ObjectNode, ParseError,
         ParseErrorExpectation, TextNode,
     },
     BoxedAstNode,
@@ -34,7 +34,7 @@ impl Clone for AstNode {
         match self {
             Self::Empty(node) => Self::Empty(*node),
             Self::Logical(node) => Self::Logical(*node),
-            Self::Number(node) => Self::Number(*node),
+            Self::Number(node) => Self::Number(node.clone()),
             Self::Text(node) => Self::Text(node.clone()),
             Self::List(node) => Self::List(node.clone()),
             Self::Dictionary(node) => Self::Dictionary(node.clone()),
@@ -84,28 +84,6 @@ impl PartialEq for LogicalNode {
     }
 }
 
-impl PartialEq for Number {
-    fn eq(&self, other: &Self) -> bool {
-        match (self, other) {
-            (Self::Integer(a), Self::Integer(b)) => a == b,
-            (Self::Float(a), Self::Float(b)) => a == b,
-            (Self::Integer(a), Self::Float(b)) => (*a as f64) == *b,
-            (Self::Float(a), Self::Integer(b)) => *a == (*b as f64),
-        }
-    }
-}
-
-impl Neg for Number {
-    type Output = Self;
-
-    fn neg(self) -> Self::Output {
-        match self {
-            Self::Integer(value) => Self::Integer(-value),
-            Self::Float(value) => Self::Float(-value),
-        }
-    }
-}
-
 impl From<NumberNode> for AstNode {
     #[inline]
     fn from(value: NumberNode) -> Self {
@@ -124,7 +102,11 @@ impl Neg for NumberNode {
 
     fn neg(self) -> Self::Output {
         Self {
-            value: -self.value,
+            value: if self.value.starts_with('-') {
+                self.value[1..].to_owned()
+            } else {
+                format!("-{}", self.value)
+            },
             context: self.context,
         }
     }
