@@ -11,4 +11,8 @@ fn main() {
 )"#;
     let result = mavka_did::parser::parse(input);
     println!("{:#?}", result);
+
+    let input = "[1, -2, 3.14159264, 9875205987345098230897103895701839405130]";
+    let result = mavka_did::parser::parse(input);
+    println!("{:#?}", result);
 }
