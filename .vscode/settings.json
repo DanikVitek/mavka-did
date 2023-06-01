@@ -7,5 +7,6 @@
         "multispace",
         "wasmer",
         "імʼя"
-    ]
+    ],
+    "rust-analyzer.showUnlinkedFileNotification": false
 }
