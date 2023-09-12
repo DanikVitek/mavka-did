@@ -1,7 +1,7 @@
 # Парсер формату `Дід`
 
 Цей проект є реалізацією парсера формату `Дід` для WebAssembly.
-Сторінка на [WAPM.io](https://wapm.io/danikvitek/mavka-did)
+Сторінка на [WASMER.io](https://wasmer.io/danikvitek/mavka-did)
 
 ## Використання
 
@@ -28,7 +28,7 @@ async function main() {
 }
 ```
 
-## API
+## WAI API
 
 ```wai
 /// Функція для розбору заданого вхідного рядка у форматі `Дід`.

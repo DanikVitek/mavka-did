@@ -5,8 +5,7 @@ edition = "2021"
 description = "Парсер для формату Дід"
 repository = "https://github.com/DanikVitek/mavka-did"
 authors = ["DanikVitek"]
-
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+license = "MIT"
 
 [lib]
 crate-type = ["cdylib", "rlib"]
