@@ -1,6 +1,6 @@
 [package]
 name = "mavka-did"
-version = "0.3.1"
+version = "0.3.3"
 edition = "2021"
 description = "Парсер для формату Дід"
 repository = "https://github.com/DanikVitek/mavka-did"
@@ -23,8 +23,8 @@ codegen-units = 1
 
 [dependencies]
 derive_more = { version = "0.99.17", default-features = false, features = ["is_variant", "unwrap"] }
-pest = "2.6.0"
-pest_derive = "2.6.0"
+pest = "2.7.3"
+pest_derive = "2.7.3"
 wai-bindgen-rust = { version = "0.2.3", default-features = false, features = ["macros", "wai-bindgen-rust-impl"], optional = true }
 
 [features]
